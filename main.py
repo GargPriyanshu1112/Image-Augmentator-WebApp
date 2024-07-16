@@ -2,7 +2,6 @@ import streamlit as st
 from utils import (
     get_augmentations,
     get_image_transformer,
-    get_zipfile,
     is_num_augs_valid,
 )
 
@@ -97,15 +96,20 @@ with st.container(border=True):
 
 
 with st.container():
-    if st.button("Download Zip File", disabled=not info_entered):
-        transformer = get_image_transformer(
-            checkbox_Rotation,
-            checkbox_HFlip,
-            checkbox_VFlip,
-            checkbox_Zoom,
-            checkbox_ShiftRGB,
-            checkbox_ColorJitter,
+    transformer = get_image_transformer(
+        checkbox_Rotation,
+        checkbox_HFlip,
+        checkbox_VFlip,
+        checkbox_Zoom,
+        checkbox_ShiftRGB,
+        checkbox_ColorJitter,
+    )
+
+    if info_entered and is_num_augs_valid(num_augs):
+        st.download_button(
+            label="Download Zip File",
+            data=get_augmentations(transformer, files_uploaded, int(num_augs)),
+            file_name="augmentations.zip",
+            mime="application/zip",
+            # disabled=not info_entered or is_num_augs_valid(num_augs),
         )
-        augmentations = get_augmentations(transformer, files_uploaded, int(num_augs))
-        get_zipfile(augmentations)
-        st.success("Downloaded !")

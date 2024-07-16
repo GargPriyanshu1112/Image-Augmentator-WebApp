@@ -35,6 +35,24 @@ def get_image_transformer(
     return transformer
 
 
+def get_image_buffer(image):
+    img_buffer = io.BytesIO()
+    image.save(img_buffer, "PNG")
+    img_buffer.seek(0)
+    return img_buffer
+
+
+def get_zip_buffer(images):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED) as zip_file:
+        for i, img in enumerate(images):
+            name = f"img_{i+1}.png"
+            data = get_image_buffer(img).read()
+            zip_file.writestr(name, data)
+    zip_buffer.seek(0)
+    return zip_buffer
+
+
 def get_augmentations(transformer, files, num_augs_per_image):
     augmentations = []
     for file in files:
@@ -44,16 +62,9 @@ def get_augmentations(transformer, files, num_augs_per_image):
             augmented_image = transformer(image=image)["image"]
             augmented_image = Image.fromarray(augmented_image)
             augmentations.append(augmented_image)
-    return augmentations
 
-
-def get_zipfile(images):
-    with zipfile.ZipFile("augmentations.zip", "w", zipfile.ZIP_DEFLATED) as file:
-        for i, img in enumerate(images):
-            buffer = io.BytesIO()
-            img.save(buffer, format="png")
-            buffer.seek(0)  # Move the cursor to the start of the buffer before reading
-            file.writestr(f"compressedImg{i}.png", buffer.read())
+    zip_buffer = get_zip_buffer(augmentations)
+    return zip_buffer
 
 
 def is_num_augs_valid(num_augs):
